@@ -2,7 +2,7 @@ use core::panic;
 use std::thread;
 use std::sync::{Arc, Mutex};
 use std::fs::File;
-use std::io::{Read, Result, ErrorKind};
+use std::io::{Read, Result, ErrorKind, self};
 use std::time::Duration;
 use crossterm::{
     execute,
@@ -10,6 +10,7 @@ use crossterm::{
 };
 use timers::Timer;
 use num::cast::FromPrimitive;
+use std::path::PathBuf;
 
 use crate::opcodes::{
                     add_instruction, sub_instruction,
@@ -372,6 +373,23 @@ fn load_file_to_memory(memory: &mut [u8], file_path: &str, start_address: usize)
     Ok(())
 }
 
+fn get_path_from_user() -> PathBuf {
+    println!("Enter the path to the ROM of your program:");
+    let mut read_path = String::new();
+    io::stdin().read_line(&mut read_path).expect("FAILED READING PATH FROM THE USER");
+    let file_path = read_path.trim();
+
+    // Use the `Path` module to create a `PathBuf` from the file path
+    let path = std::path::Path::new(&file_path).to_owned();
+
+    // Check if the file exists using the `fs` module
+    if path.exists() && path.is_file() {
+    } else {
+        panic!("THE FILE IS NOT FOUND");
+    }
+    path
+}
+
 fn main() {
     let mut registers: [u8; 16] = [0u8; 16]; // registers v0 - vf 
     let mut stack: Stack<u16> = Stack::new(); // stack of addresses
@@ -415,8 +433,10 @@ fn main() {
     }
 
     let mut register_i  = 0x50; // register 16 = i
+
+    let path = get_path_from_user();
     
-    match load_file_to_memory(&mut memory, "C:\\Users\\urits\\Downloads\\Chip8Picture.ch8", 0x200){
+    match load_file_to_memory(&mut memory, path.to_str().expect("COULDN'T CONVERET PATH TO &str"), 0x200){
         Ok(_) => {},
         Err(_) => panic!("FAILED TO LOAD ROM TO MEMORY"),
     }
